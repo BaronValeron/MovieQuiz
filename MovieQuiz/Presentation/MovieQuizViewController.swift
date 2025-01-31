@@ -1,19 +1,19 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    struct QuizQuestion {
+    private struct QuizQuestion {
         let image: String
         let text: String
         let correctAnswer: Bool
     }
 
-    struct QuizStepViewModel {
+    private struct QuizStepViewModel {
       let image: UIImage
       let question: String
       let questionNumber: String
     }
 
-    struct QuizResultsViewModel {
+    private struct QuizResultsViewModel {
       let title: String
       let text: String
       let buttonText: String
@@ -35,23 +35,23 @@ final class MovieQuizViewController: UIViewController {
         QuizQuestion(image: "Tesla", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: false),
         QuizQuestion(image: "Vivarium", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: false),
     ]
-    private var currenntQuestionIndex = 0
+    private var currentQuestionIndex = 0
     private var correctAnswers = 0
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        let currentQuestion = questions[currenntQuestionIndex]
+        let currentQuestion = questions[currentQuestionIndex]
         show(quiz: convert(model: currentQuestion))
     }
     
     @IBAction private func yesButtonClicked(_ sender: Any) {
-        let isCorrect = questions[currenntQuestionIndex].correctAnswer == true
+        let isCorrect = questions[currentQuestionIndex].correctAnswer == true
         showAnswerResult(isCorrect: isCorrect)
     }
     
     @IBAction private func noButtonClicked(_ sender: Any) {
-        let isCorrect = questions[currenntQuestionIndex].correctAnswer == false
+        let isCorrect = questions[currentQuestionIndex].correctAnswer == false
         showAnswerResult(isCorrect: isCorrect)
     }
     
@@ -59,7 +59,7 @@ final class MovieQuizViewController: UIViewController {
         let questionStep = QuizStepViewModel(
             image: UIImage(named: model.image) ?? UIImage(),
             question: model.text,
-            questionNumber: "\(currenntQuestionIndex + 1)/\(questions.count)")
+            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
         return questionStep
     }
     
@@ -77,9 +77,9 @@ final class MovieQuizViewController: UIViewController {
             message: result.text,
             preferredStyle: .alert)
         let action = UIAlertAction(title: result.buttonText, style: .default) { _ in
-            self.currenntQuestionIndex = 0
+            self.currentQuestionIndex = 0
             self.correctAnswers = 0
-            let currentQuestion = self.questions[self.currenntQuestionIndex]
+            let currentQuestion = self.questions[self.currentQuestionIndex]
             self.show(quiz: self.convert(model: currentQuestion))
         }
         alert.addAction(action)
@@ -91,11 +91,7 @@ final class MovieQuizViewController: UIViewController {
         
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
-        if isCorrect {
-            imageView.layer.borderColor = UIColor.ypGreen.cgColor
-        } else {
-            imageView.layer.borderColor = UIColor.ypRed.cgColor
-        }
+        imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.showNextQuestionOrResults()
@@ -103,15 +99,15 @@ final class MovieQuizViewController: UIViewController {
     }
     
     private func showNextQuestionOrResults() {
-        if currenntQuestionIndex == questions.count - 1 {
+        if currentQuestionIndex == questions.count - 1 {
             let result = QuizResultsViewModel(
                 title: "Этот раунд окончен!",
                 text: "Ваш результат \(correctAnswers)/\(questions.count)",
                 buttonText: "Сыграть еще раз")
             show(quiz: result)
         } else {
-            currenntQuestionIndex += 1
-            let currentQuestion = questions[currenntQuestionIndex]
+            currentQuestionIndex += 1
+            let currentQuestion = questions[currentQuestionIndex]
             show(quiz: convert(model: currentQuestion))
         }
     }
