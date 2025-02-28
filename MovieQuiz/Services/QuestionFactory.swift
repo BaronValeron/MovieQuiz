@@ -29,8 +29,7 @@ class QuestionFactory: QuestionFactoryProtocol {
         QuizQuestion(image: "Vivarium", text: "Рейтинг этого фильма больше чем 6?", correctAnswer: false),
     ]*/
     
-    init(delegate: QuestionFactoryDelegate?, moviesLoader: MoviesLoading) {
-        self.delegate = delegate
+    init(moviesLoader: MoviesLoading) {
         self.moviesLoader = moviesLoader
     }
     

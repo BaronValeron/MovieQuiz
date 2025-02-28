@@ -15,8 +15,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var questionFactory: QuestionFactoryProtocol!
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenter!
-    private var statisticService: StatisticServiceProtocol!
-    private var moviesLoader: MoviesLoading!
+    private var statisticService = StatisticService()
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -26,10 +25,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         alertPresenter.delegate = self
         self.alertPresenter = alertPresenter
     
-        questionFactory = QuestionFactory(delegate: self, moviesLoader: MoviesLoader())
-        statisticService = StatisticService()
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader())
+        questionFactory.delegate = self
         
-        showLoadingIndicator()
+        activityIndicator.startAnimating()
         questionFactory.loadData()
     }
     
@@ -47,7 +46,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     func didLoadDataFromServer() {
-        hideLoadingIndicator()
+        activityIndicator.stopAnimating()
         questionFactory.requestNextQuestion()
     }
 
@@ -140,25 +139,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
     }
     
-    private func showLoadingIndicator() {
-        activityIndicator.isHidden = false
-        activityIndicator.startAnimating()
-    }
-    
-    private func hideLoadingIndicator() {
-        activityIndicator.stopAnimating()
-        activityIndicator.isHidden = true
-    }
-    
     private func showNetworkError(message: String) {
-        hideLoadingIndicator()
+        activityIndicator.stopAnimating()
         
         let networkError = AllertModel(
             title: "Ошибка",
             message: message,
             buttonText: "Попробовать еще раз") { [weak self] _ in
                 guard let self else { return }
-                self.showLoadingIndicator()
+                self.activityIndicator.startAnimating()
                 self.questionFactory.loadData()
             }
         alertPresenter.showAlert(model: networkError)
