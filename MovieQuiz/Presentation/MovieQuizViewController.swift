@@ -7,6 +7,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var noButton: UIButton!
     @IBOutlet private weak var yesButton: UIButton!
+    @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
@@ -14,7 +15,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var questionFactory: QuestionFactoryProtocol!
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenter!
-    private var statisticService: StatisticServiceProtocol!
+    private var statisticService = StatisticService()
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -23,13 +24,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         let alertPresenter = AlertPresenter()
         alertPresenter.delegate = self
         self.alertPresenter = alertPresenter
-        
-        let questionFactory = QuestionFactory()
+    
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader())
         questionFactory.delegate = self
-        self.questionFactory = questionFactory
-        self.questionFactory.requestNextQuestion()
         
-        statisticService = StatisticService()
+        activityIndicator.startAnimating()
+        questionFactory.loadData()
     }
     
     // MARK: - QuestionFactoryDelegate
@@ -43,6 +43,26 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
+    }
+    
+    func didLoadDataFromServer() {
+        activityIndicator.stopAnimating()
+        questionFactory.requestNextQuestion()
+    }
+
+    func didFailToLoadData(with error: Error) {
+        showNetworkError(message: error.localizedDescription)
+    }
+    
+    func didFailToLoadImage() {
+        let networkError = AllertModel(
+            title: "Ошибка",
+            message: "Не удалось загрузить постер фильма",
+            buttonText: "Попробовать еще раз") { [weak self] _ in
+                guard let self else { return }
+                self.questionFactory.requestNextQuestion()
+            }
+        alertPresenter.showAlert(model: networkError)
     }
     
     // MARK: - Actions
@@ -63,7 +83,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionAmount)")
         return questionStep
@@ -117,6 +137,20 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             currentQuestionIndex += 1
             questionFactory.requestNextQuestion()
         }
+    }
+    
+    private func showNetworkError(message: String) {
+        activityIndicator.stopAnimating()
+        
+        let networkError = AllertModel(
+            title: "Ошибка",
+            message: message,
+            buttonText: "Попробовать еще раз") { [weak self] _ in
+                guard let self else { return }
+                self.activityIndicator.startAnimating()
+                self.questionFactory.loadData()
+            }
+        alertPresenter.showAlert(model: networkError)
     }
 }
 
