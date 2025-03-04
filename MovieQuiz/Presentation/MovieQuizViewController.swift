@@ -9,8 +9,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet private weak var yesButton: UIButton!
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
-    var correctAnswers = 0
-    
     private let presenter = MovieQuizPresenter()
     private var questionFactory: QuestionFactoryProtocol!
     private var alertPresenter: AlertPresenter!
@@ -85,7 +83,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         noButton.isEnabled = false
         yesButton.isEnabled = false
         
-        correctAnswers += isCorrect ? 1 : 0
+        presenter.didAnswer(isCorrectAnswer: isCorrect)
         
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
@@ -93,7 +91,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self else { return }
-            self.presenter.correctAnswers = self.correctAnswers
             self.presenter.questionFactory = self.questionFactory
             self.presenter.alertPresenter = self.alertPresenter
             self.presenter.showNextQuestionOrResults()

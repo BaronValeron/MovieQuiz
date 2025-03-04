@@ -53,6 +53,10 @@ final class MovieQuizPresenter {
         viewController?.showAnswerResult(isCorrect: isCorrect)
     }
     
+    func didAnswer(isCorrectAnswer: Bool) {
+        correctAnswers += isCorrectAnswer ? 1 : 0
+    }
+    
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question else { return }
         
@@ -84,7 +88,7 @@ final class MovieQuizPresenter {
     
     func newGame(_ : UIAlertAction) {
         resetQuestionIndex()
-        viewController?.correctAnswers = 0
+        correctAnswers = 0
         questionFactory?.requestNextQuestion()
     }
 }
