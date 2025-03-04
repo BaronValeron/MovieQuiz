@@ -11,6 +11,11 @@ import UIKit
 final class MovieQuizPresenter {
     private var currentQuestionIndex = 0
     let questionsAmount = 10
+    var correctAnswers = 0
+    var questionFactory: QuestionFactoryProtocol?
+    var alertPresenter: AlertPresenter?
+    private var statisticService = StatisticService()
+    
     var currentQuestion: QuizQuestion?
     weak var viewController: MovieQuizViewController?
     
@@ -35,14 +40,51 @@ final class MovieQuizPresenter {
     }
     
     func yesButtonClicked() {
-        guard let currentQuestion else { return }
-        let isCorrect = currentQuestion.correctAnswer == true
-        viewController?.showAnswerResult(isCorrect: isCorrect)
+        didAnswer(isYes: true)
     }
     
     func noButtonClicked() {
+        didAnswer(isYes: false)
+    }
+    
+    private func didAnswer(isYes: Bool) {
         guard let currentQuestion else { return }
-        let isCorrect = currentQuestion.correctAnswer == false
+        let isCorrect = currentQuestion.correctAnswer == isYes
         viewController?.showAnswerResult(isCorrect: isCorrect)
+    }
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question else { return }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.viewController?.show(quiz: viewModel)
+        }
+    }
+    
+    func showNextQuestionOrResults() {
+        if isLastQuestion() {
+            statisticService.store(correct: correctAnswers, total: questionsAmount)
+            let result = AllertModel(
+                title: "Этот раунд окончен!",
+                message: "Ваш результат \(correctAnswers)/\(questionsAmount)\n" +
+                         "Количество сыгранных квизов: \(statisticService.gamesCount)\n" +
+                         "Рекорд: \(statisticService.bestGame.correct)/\(statisticService.bestGame.total) (\(statisticService.bestGame.date.dateTimeString))\n" +
+                "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%",
+                buttonText: "Сыграть еще раз",
+                completion: newGame)
+            alertPresenter?.showAlert(model: result)
+        } else {
+            switchToNextQuestion()
+            questionFactory?.requestNextQuestion()
+        }
+    }
+    
+    func newGame(_ : UIAlertAction) {
+        resetQuestionIndex()
+        viewController?.correctAnswers = 0
+        questionFactory?.requestNextQuestion()
     }
 }
