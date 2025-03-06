@@ -18,17 +18,13 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     private var statisticService = StatisticService()
     
     var currentQuestion: QuizQuestion?
-    weak var viewController: MovieQuizViewController?
+    weak var viewController: MovieQuizViewControllerProtocol?
     
-    init(viewController: MovieQuizViewController) {
+    init(viewController: MovieQuizViewControllerProtocol) {
         self.viewController = viewController
         
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader())
         questionFactory?.delegate = self
-        
-        let alertPresenter = AlertPresenter()
-        alertPresenter.delegate = viewController
-        self.alertPresenter = alertPresenter
         
         questionFactory?.loadData()
         viewController.showLoadingIndicator()
